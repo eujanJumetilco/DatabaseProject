@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import 'dotenv/config';
+
 import contactRoutes from './routes/contactRoutes.js';
 import medicalInformationRoutes from './routes/medicalInformationRoutes.js';
 
@@ -32,3 +33,4 @@ mongoose.connect(process.env.MONGO_URI)
     console.error('MongoDB connection error:', error.message);
     process.exit(1);
   });
+

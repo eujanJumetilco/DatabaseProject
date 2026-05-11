@@ -11,18 +11,22 @@ const medicalKnowledgeBaseSchema = new mongoose.Schema({
   metadata: {
     source: {
       type: String,
+      default: "Unknown Source",
       // required: true
     },
     page: {
       type: String,
+      default: "Unknown Page",
       // required: true
     },
     topic: {
       type: String,
+      default: "Unknown Topic", 
       // required: true
     },
     link: {
       type: String,
+      default: "Unknown Link",
       // required: true
     }
   }
