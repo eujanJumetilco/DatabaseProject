@@ -1,5 +1,4 @@
 import MedicalKnowledgeBase from '../models/medical-information.js';
-
 import getEmbedding from '../services/huggingface/embedder.js'; 
 
 export const createMedicalInformation = async (req, res) => {
@@ -16,6 +15,53 @@ export const createMedicalInformation = async (req, res) => {
 
 export const queryMedicalInformation = async (req, res) => {
   try {
+    const { query, limit = 5 } = req.body;
+    if (!query) return res.status(400).json({ message: "Query text is required." });
+
+    // Get embedding for the query
+    const queryEmbedding = await getEmbedding(query);
+
+    // Perform vector search using MongoDB Atlas $vectorSearch
+    const results = await MedicalKnowledgeBase.aggregate([
+      {
+        $vectorSearch: {
+          index: "medical_kb_embedding_index",
+          path: "embedding",
+          queryVector: queryEmbedding,
+          numCandidates: limit * 10, // Cast a wider net for better accuracy
+          limit: limit,
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          content: 1,
+          metadata: 1,
+          score: { $meta: "vectorSearchScore" },
+        },
+      },
+      {
+        $unset: "embedding"
+      }
+    ]);
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: "No relevant medical information found." });
+    }
+
+    res.status(200).json({
+      message: "Query processed successfully.",
+      query,
+      results,
+    });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+/* ChatGPT Written
+export const queryMedicalInformation = async (req, res) => {
+  try {
     const { query } = req.body;
 
     if (!query || !query.trim()) {
@@ -30,7 +76,6 @@ export const queryMedicalInformation = async (req, res) => {
     }
 
     // 2) Semantic search against the vector index
-    // Replace `medical_kb_embedding_index` with your actual Atlas Vector Search index name.
     const results = await MedicalKnowledgeBase.aggregate([
       {
         $vectorSearch: {
@@ -68,7 +113,9 @@ export const queryMedicalInformation = async (req, res) => {
   }
 };
 
-/*
+
+
+Sample
 export const queryMedicalInformation = async (req, res) => {
   try{
     const { query } = req.body;
